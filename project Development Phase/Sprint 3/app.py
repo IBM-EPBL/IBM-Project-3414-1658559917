@@ -24,7 +24,7 @@ token_response = requests.post('https://iam.cloud.ibm.com/identity/token', data=
 mltoken = token_response.json()["access_token"]
 
 
-app= Flask(__name__, template_folder='templates')
+app= Flask(__name__, template_folder='Template')
 
 scale = pickle.load(open('model.pkl','rb'))
 
@@ -36,7 +36,7 @@ def formpg():
     return render_template('predict.html')
 @app.route('/submit',methods = ['POST'])
 def predict():
-    loan_num,gender,married,depend,education,self_emp,applicant_income,co_income,loan_amount,loan_term,credit_history,property_area = [x for x in request.form.values()]
+    gender,married,depend,education,self_emp,applicant_income,co_income,loan_amount,loan_term,credit_history,property_area = [x for x in request.form.values()]
     if gender == 'Male':
         gender = 1
     else:
@@ -78,16 +78,17 @@ def predict():
     else:
         property_area = 1
 
-    features = [[gender,married,depend,education,self_emp,applicant_income,co_income,loan_amount,loan_term,credit_history,property_area]]
-    con_features = [np.array(features)]
+    features = [[gender,married,education,self_emp,applicant_income,co_income,loan_amount,loan_term,credit_history,property_area]]
+    con_features = np.array(features)
     
     sf = con_features.tolist()
     
-    payload_scoring = {"input_data": [{"fields": ['gender','married','depend','education','self_emp','applicant_income','co_income','loan_amount','loan_term','credit_history','property_area'], "values": sf}]}
+    payload_scoring = {"input_data": [{"fields": ['gender','married','education','self_emp','applicant_income','co_income','loan_amount','loan_term','credit_history','property_area'], "values": sf}]}
 
     response_scoring = requests.post('https://eu-de.ml.cloud.ibm.com/ml/v4/deployments/c5826276-fada-4224-8e4d-4bc5e2050b56/predictions?version=2022-11-18', json=payload_scoring,headers={'Authorization': 'Bearer ' + mltoken})
-    print("response_scoring")
     prediction = response_scoring.json()
+
+    print(prediction)
     predict = prediction['predictions'][0]['values'][0][0]
 
     
